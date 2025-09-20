@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรแกรมคำนวณค่าไฟฟ้า</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-md mx-auto bg-white rounded-xl shadow-lg p-8 space-y-6">
+        
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-2xl font-bold text-gray-800">คำนวณค่าไฟฟ้า</h1>
+            <p class="text-gray-500 mt-1">สำหรับบ้านอยู่อาศัย (อัตราปกติ)</p>
+        </div>
+
+        <!-- Input Form -->
+        <div class="space-y-4">
+            <div>
+                <label for="units" class="text-sm font-medium text-gray-700">ปริมาณไฟฟ้าที่ใช้ (หน่วย / kWh)</label>
+                <input type="number" id="units" name="units" class="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-lg text-center focus:ring-blue-500 focus:border-blue-500" placeholder="เช่น 450">
+            </div>
+            <button onclick="calculateBill()" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                คำนวณค่าไฟ
+            </button>
+        </div>
+
+        <!-- Result Display -->
+        <div id="result" class="hidden pt-6 border-t border-gray-200">
+            <h2 class="text-lg font-semibold text-center mb-4">สรุปค่าไฟฟ้า</h2>
+            <div class="space-y-2 text-gray-700">
+                <div class="flex justify-between">
+                    <span>1. ค่าพลังงานไฟฟ้า</span>
+                    <span id="energy-charge" class="font-medium"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span>2. ค่าบริการรายเดือน</span>
+                    <span id="service-charge" class="font-medium"></span>
+                </div>
+                <div class="flex justify-between">
+                    <span>3. ค่าไฟฟ้าผันแปร (Ft)</span>
+                    <span id="ft-charge" class="font-medium"></span>
+                </div>
+                <hr class="my-2">
+                <div class="flex justify-between font-semibold">
+                    <span>รวมเป็นเงิน (ก่อน VAT)</span>
+                    <span id="sub-total" class="font-medium"></span>
+                </div>
+                 <div class="flex justify-between">
+                    <span>ภาษีมูลค่าเพิ่ม 7%</span>
+                    <span id="vat-amount" class="font-medium"></span>
+                </div>
+                <hr class="my-2 border-dashed">
+                <div class="flex justify-between text-xl font-bold text-blue-600">
+                    <span>ยอดที่ต้องชำระสุทธิ</span>
+                    <span id="total-bill"></span>
+                </div>
+            </div>
+             <p class="text-xs text-gray-400 text-center mt-4">
+                *คำนวณตามอัตราค่าไฟฟ้าประเภท 1.1.2 และค่า Ft ประจำเดือน ก.ย. - ธ.ค. 2568
+            </p>
+        </div>
+         <div id="error-message" class="hidden text-center text-red-500 font-medium">
+            กรุณาป้อนจำนวนหน่วยเป็นตัวเลขที่ถูกต้อง
+        </div>
+    </div>
+
+    <script>
+        function calculateBill() {
+            const unitsInput = document.getElementById('units');
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error-message');
+            
+            const units = parseFloat(unitsInput.value);
+
+            // --- Validation ---
+            if (isNaN(units) || units < 0) {
+                resultDiv.classList.add('hidden');
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            errorDiv.classList.add('hidden');
+            resultDiv.classList.remove('hidden');
+
+            // --- Constants (อ้างอิงอัตรา กฟน./กฟภ. และค่า Ft ณ ก.ย. 2568) ---
+            const SERVICE_CHARGE = 38.22; // สำหรับผู้ใช้ไฟเกิน 150 หน่วย/เดือน (ประเภท 1.1.2)
+            const FT_RATE = 0.1572;      // ค่า Ft สำหรับ ก.ย. - ธ.ค. 2568 (บาท/หน่วย)
+            const VAT_RATE = 0.07;
+
+            // --- Calculation Logic ---
+            let energyCharge = 0;
+
+            // 1. คำนวณค่าพลังงานไฟฟ้าแบบอัตราก้าวหน้า
+            if (units <= 150) {
+                energyCharge = units * 3.2484;
+            } else if (units <= 400) {
+                energyCharge = (150 * 3.2484) + ((units - 150) * 4.2218);
+            } else { // units > 400
+                energyCharge = (150 * 3.2484) + (250 * 4.2218) + ((units - 400) * 4.4217);
+            }
+
+            // 2. คำนวณค่า Ft
+            const ftCharge = units * FT_RATE;
+
+            // 3. คำนวณยอดรวม
+            const subTotal = energyCharge + SERVICE_CHARGE + ftCharge;
+            const vatAmount = subTotal * VAT_RATE;
+            const totalBill = subTotal + vatAmount;
+            
+            // --- Display Results ---
+            document.getElementById('energy-charge').textContent = formatCurrency(energyCharge);
+            document.getElementById('service-charge').textContent = formatCurrency(SERVICE_CHARGE);
+            document.getElementById('ft-charge').textContent = formatCurrency(ftCharge);
+            document.getElementById('sub-total').textContent = formatCurrency(subTotal);
+            document.getElementById('vat-amount').textContent = formatCurrency(vatAmount);
+            document.getElementById('total-bill').textContent = formatCurrency(totalBill);
+        }
+
+        function formatCurrency(number) {
+            return number.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' บาท';
+        }
+    </script>
+
+</body>
+</html>
