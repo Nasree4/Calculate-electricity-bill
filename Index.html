@@ -21,7 +21,7 @@
         <!-- Header -->
         <div class="text-center">
             <h1 class="text-2xl font-bold text-gray-800">คำนวณค่าไฟฟ้า</h1>
-            <p class="text-gray-500 mt-1">สำหรับบ้านอยู่อาศัย (อัตราปกติ)</p>
+            <p class="text-gray-500 mt-1">สำหรับบ้านอยู่อาศัย (ไม่รวมค่าบริการ)</p>
         </div>
 
         <!-- Input Form -->
@@ -44,11 +44,7 @@
                     <span id="energy-charge" class="font-medium"></span>
                 </div>
                 <div class="flex justify-between">
-                    <span>2. ค่าบริการรายเดือน</span>
-                    <span id="service-charge" class="font-medium"></span>
-                </div>
-                <div class="flex justify-between">
-                    <span>3. ค่าไฟฟ้าผันแปร (Ft)</span>
+                    <span>2. ค่าไฟฟ้าผันแปร (Ft)</span>
                     <span id="ft-charge" class="font-medium"></span>
                 </div>
                 <hr class="my-2">
@@ -67,7 +63,7 @@
                 </div>
             </div>
              <p class="text-xs text-gray-400 text-center mt-4">
-                *คำนวณตามอัตราค่าไฟฟ้าประเภท 1.1.2 และค่า Ft ประจำเดือน ก.ย. - ธ.ค. 2568
+                *คำนวณเฉพาะค่าพลังงานและค่า Ft ไม่รวมค่าบริการรายเดือน
             </p>
         </div>
          <div id="error-message" class="hidden text-center text-red-500 font-medium">
@@ -94,7 +90,6 @@
             resultDiv.classList.remove('hidden');
 
             // --- Constants (อ้างอิงอัตรา กฟน./กฟภ. และค่า Ft ณ ก.ย. 2568) ---
-            const SERVICE_CHARGE = 38.22; // สำหรับผู้ใช้ไฟเกิน 150 หน่วย/เดือน (ประเภท 1.1.2)
             const FT_RATE = 0.1572;      // ค่า Ft สำหรับ ก.ย. - ธ.ค. 2568 (บาท/หน่วย)
             const VAT_RATE = 0.07;
 
@@ -113,14 +108,13 @@
             // 2. คำนวณค่า Ft
             const ftCharge = units * FT_RATE;
 
-            // 3. คำนวณยอดรวม
-            const subTotal = energyCharge + SERVICE_CHARGE + ftCharge;
+            // 3. คำนวณยอดรวม (ไม่รวมค่าบริการ)
+            const subTotal = energyCharge + ftCharge;
             const vatAmount = subTotal * VAT_RATE;
             const totalBill = subTotal + vatAmount;
             
             // --- Display Results ---
             document.getElementById('energy-charge').textContent = formatCurrency(energyCharge);
-            document.getElementById('service-charge').textContent = formatCurrency(SERVICE_CHARGE);
             document.getElementById('ft-charge').textContent = formatCurrency(ftCharge);
             document.getElementById('sub-total').textContent = formatCurrency(subTotal);
             document.getElementById('vat-amount').textContent = formatCurrency(vatAmount);
@@ -134,3 +128,4 @@
 
 </body>
 </html>
+
